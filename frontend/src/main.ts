@@ -1,7 +1,111 @@
+import './style.css'
+
 const API_BASE = "https://password-strength-analyzer-qshx.onrender.com"
 
+document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+  <main class="page">
+    <section class="card">
+      <div class="badge">🔐 Cyber Security Project</div>
+
+      <h1>Password Strength Analyzer</h1>
+      <p class="subtitle">
+        Analyze password strength, entropy, breach risk, crack time and generate stronger passwords.
+      </p>
+
+      <div class="input-group">
+        <label>Username / Email</label>
+        <input id="username" type="text" placeholder="Enter username or email" />
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <div class="password-row">
+          <input id="password" type="password" placeholder="Type or generate password" />
+          <button id="toggle" class="small-btn">Show</button>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="passphrase">Generate Passphrase</button>
+        <button id="complex">Generate Complex</button>
+        <button id="copy">Copy Password</button>
+      </div>
+
+      <section class="result-card">
+        <div class="score-head">
+          <h2 id="score">Score: 0/4</h2>
+          <span id="statusBadge" class="status weak">Weak</span>
+        </div>
+
+        <div class="meter">
+          <div id="bar"></div>
+        </div>
+
+        <div class="grid">
+          <p><strong>Entropy:</strong> <span id="entropy">0 bits</span></p>
+          <p><strong>Crack Time:</strong> <span id="crack">-</span></p>
+          <p><strong>Breach Status:</strong> <span id="breach">Not checked</span></p>
+        </div>
+
+        <div class="lists">
+          <div>
+            <h3>Reasons</h3>
+            <ul id="reasons"><li>Start typing to analyze password.</li></ul>
+          </div>
+          <div>
+            <h3>Suggestions</h3>
+            <ul id="suggestions"><li>Use a long password with mixed characters.</li></ul>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+`
+
+const passwordInput = document.querySelector<HTMLInputElement>('#password')!
+const scoreText = document.querySelector('#score')!
+const entropyText = document.querySelector('#entropy')!
+const crackText = document.querySelector('#crack')!
+const breachText = document.querySelector('#breach')!
+const reasonsList = document.querySelector('#reasons')!
+const suggestionsList = document.querySelector('#suggestions')!
+const bar = document.querySelector<HTMLDivElement>('#bar')!
+const statusBadge = document.querySelector<HTMLSpanElement>('#statusBadge')!
+
+function updateUI(data: any) {
+  const score = data.score ?? 0
+
+  scoreText.textContent = `Score: ${score}/4`
+  entropyText.textContent = `${data.entropy ?? 0} bits`
+  crackText.textContent = data.crack_time ?? "-"
+  breachText.textContent = data.breached ? "Breached / Found" : "Safe / Not found"
+
+  reasonsList.innerHTML = (data.reasons?.length ? data.reasons : ["No major issue found."])
+    .map((item: string) => `<li>${item}</li>`)
+    .join("")
+
+  suggestionsList.innerHTML = (data.suggestions?.length ? data.suggestions : ["Password looks good."])
+    .map((item: string) => `<li>${item}</li>`)
+    .join("")
+
+  const width = Math.min(score * 25, 100)
+  bar.style.width = `${width}%`
+
+  statusBadge.className = "status"
+  if (score <= 1) {
+    statusBadge.textContent = "Weak"
+    statusBadge.classList.add("weak")
+  } else if (score <= 2) {
+    statusBadge.textContent = "Medium"
+    statusBadge.classList.add("medium")
+  } else {
+    statusBadge.textContent = "Strong"
+    statusBadge.classList.add("strong")
+  }
+}
+
 async function analyzePassword() {
-  const password = document.querySelector<HTMLInputElement>('#password')!
+  if (!passwordInput.value.trim()) return
 
   const res = await fetch(`${API_BASE}/analyze`, {
     method: "POST",
@@ -9,44 +113,39 @@ async function analyzePassword() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      password: password.value,
+      password: passwordInput.value,
     }),
   })
 
   const data = await res.json()
-
-  document.querySelector('#score')!.textContent = `Score: ${data.score}/4`
-  document.querySelector('#entropy')!.textContent = `Entropy: ${data.entropy} bits`
-  document.querySelector('#crack')!.textContent = `Crack Time: ${data.crack_time}`
-  document.querySelector('#breach')!.textContent = `Breach Status: ${data.breached ? "Breached" : "Safe"}`
-
-  document.querySelector('#reasons')!.innerHTML =
-    data.reasons.map((r: string) => `<li>${r}</li>`).join("")
-
-  document.querySelector('#suggestions')!.innerHTML =
-    data.suggestions.map((s: string) => `<li>${s}</li>`).join("")
+  updateUI(data)
 }
 
-document.querySelector<HTMLInputElement>('#password')!
-  .addEventListener('input', analyzePassword)
+async function generatePassword(mode: string) {
+  const res = await fetch(`${API_BASE}/generate?mode=${mode}`)
+  const data = await res.json()
 
-document.querySelector<HTMLButtonElement>('#complex')!
-  .addEventListener('click', async () => {
+  passwordInput.value = data.password
+  await analyzePassword()
+}
 
-    const res = await fetch(`${API_BASE}/generate?mode=complex`)
-    const data = await res.json()
+passwordInput.addEventListener('input', analyzePassword)
 
-    const password = document.querySelector<HTMLInputElement>('#password')!
-    password.value = data.password
-
-    analyzePassword()
+document.querySelector('#passphrase')!.addEventListener('click', () => {
+  generatePassword("passphrase")
 })
 
-document.querySelector<HTMLButtonElement>('#copy')!
-  .addEventListener('click', async () => {
+document.querySelector('#complex')!.addEventListener('click', () => {
+  generatePassword("complex")
+})
 
-    const password = document.querySelector<HTMLInputElement>('#password')!
-    await navigator.clipboard.writeText(password.value)
+document.querySelector('#copy')!.addEventListener('click', async () => {
+  await navigator.clipboard.writeText(passwordInput.value)
+  alert("Password copied successfully!")
+})
 
-    alert("Password copied!")
+document.querySelector('#toggle')!.addEventListener('click', () => {
+  const btn = document.querySelector<HTMLButtonElement>('#toggle')!
+  passwordInput.type = passwordInput.type === "password" ? "text" : "password"
+  btn.textContent = passwordInput.type === "password" ? "Show" : "Hide"
 })
