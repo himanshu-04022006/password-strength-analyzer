@@ -55,7 +55,7 @@ function meterColor(score: number) {
 }
 
 async function analyzePassword() {
-  const res = await fetch('http://127.0.0.1:8000/analyze', {
+  const res = await https://password-strength-analyzer-qshx.onrender.com, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -90,7 +90,7 @@ username.addEventListener('input', analyzePassword)
 
 document.querySelector<HTMLButtonElement>('#passphrase')!
   .addEventListener('click', async () => {
-    const res = await fetch('http://127.0.0.1:8000/generate?mode=passphrase')
+    const res = await https://password-strength-analyzer-qshx.onrender.com
     const data = await res.json()
     password.value = data.password
     analyzePassword()
@@ -98,7 +98,7 @@ document.querySelector<HTMLButtonElement>('#passphrase')!
 
 document.querySelector<HTMLButtonElement>('#complex')!
   .addEventListener('click', async () => {
-    const res = await fetch('http://127.0.0.1:8000/generate?mode=complex')
+    const res = await https://password-strength-analyzer-qshx.onrender.com
     const data = await res.json()
     password.value = data.password
     analyzePassword()
