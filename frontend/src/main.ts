@@ -149,3 +149,19 @@ document.querySelector('#toggle')!.addEventListener('click', () => {
   passwordInput.type = passwordInput.type === "password" ? "text" : "password"
   btn.textContent = passwordInput.type === "password" ? "Show" : "Hide"
 })
+
+const footer = document.createElement("footer")
+
+footer.innerHTML = `
+  Built by <strong>Himanshu Sahu</strong> · B.Tech Cyber Security, Pune ·
+  <a href="https://github.com/himanshu-04022006" target="_blank">GitHub</a> ·
+  <a href="https://www.linkedin.com/in/himanshu-sahu-a134a0283" target="_blank">LinkedIn</a>
+`
+
+footer.style.textAlign = "center"
+footer.style.padding = "12px"
+footer.style.fontSize = "13px"
+footer.style.color = "#888"
+footer.style.marginTop = "20px"
+
+document.body.appendChild(footer)
